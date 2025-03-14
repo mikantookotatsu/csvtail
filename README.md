@@ -1,2 +1,3 @@
 # csvtail
-csv用のtailコマンド
+学習用のcsvファイル tailコマンド
+golang初心者の練習用リポジトリです。
