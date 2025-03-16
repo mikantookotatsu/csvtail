@@ -1,4 +1,4 @@
-module github.com/mikan-to-kotatsu/csvtail
+module github.com/mikantookotatsu/csvtail
 
 go 1.24.0
 

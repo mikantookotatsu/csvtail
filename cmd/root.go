@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mikan-to-kotatsu/csvtail/csvf"
+	"github.com/mikantookotatsu/csvtail/csvf"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +19,9 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "csvtail",
-	Short: "csvtail は CSVファイルを tail -f 的に監視するツールです.",
-	Long: `csvtail は CSVファイルを tail -f 的に監視するツールです.
+	Use:   "csvtail [ファイル名]",
+	Short: "csvtail は CSVファイルを監視するツールです.",
+	Long: `csvtail は CSVファイルを監視するツールです(tail -fのように).
 ex) csvtail file.csv  ## tail -f file.csv相当の挙動
     csvtail file.csv -c 1,2,3  ## 1,2,3カラムのみ表示
     csvtail file.csv -c 1,2,3 -d ","  ## 区切り文字を指定
@@ -39,7 +39,7 @@ ex) csvtail file.csv  ## tail -f file.csv相当の挙動
 func runCsvTail(cmd *cobra.Command, args []string) {
 	// ファイル指定がない場合はエラー
 	if len(args) == 0 {
-		fmt.Println("監視ファイルを指定してください. ex) csvtail file.csv")
+		cmd.Help()
 		os.Exit(1)
 	}
 
@@ -59,15 +59,13 @@ func runCsvTail(cmd *cobra.Command, args []string) {
 
 	// ファイルオープン
 	csvf.FileOpen()
+	defer csvf.FilePtr.Close()
 
 	// 末尾にSeek
 	csvf.SeekEnd()
 
 	// ファイル監視
 	csvf.FileWatch()
-
-	// ファイルクローズ
-	defer csvf.FilePtr.Close()
 
 }
 
@@ -81,6 +79,15 @@ func Execute() {
 }
 
 func init() {
+	// helpの順番を変更
+	rootCmd.SetHelpTemplate(`Usage:
+  {{.UseLine}}
+
+Flags:
+{{.Flags.FlagUsages | trimTrailingWhitespaces}}
+
+{{.Long}}`)
+
 	// フラグ情報の設定
 	rootCmd.Flags().IntSliceVarP(&columns, "columns", "c", []int{}, "表示するカラム番号")
 	rootCmd.Flags().IntVarP(&seconds, "seconds", "s", 1, "監視間隔(秒)")
