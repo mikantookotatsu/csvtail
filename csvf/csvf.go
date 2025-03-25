@@ -1,3 +1,6 @@
+/*
+Copyright (c) 2025 mikantookotatsu
+*/
 package csvf
 
 import (
@@ -27,18 +30,25 @@ const (
 )
 
 // ファイル存在チェック
+// true : ファイル有り、false : ファイル無し
 func (c *CsvfInf) FileExists() (bool, error) {
-	_, err := os.Stat(c.FileName)
-	if err == nil {
-		return true, nil // ファイル有り
-	}
-	// ファイルが存在しないエラーの場合
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil // ファイル無し
+	info, err := os.Stat(c.FileName)
+	if err != nil {
+		// ファイルが存在しないエラーの場合
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil // ファイル無し
+		}
+
+		return false, err // その他のエラー
 	}
 
-	// その他のエラー
-	return false, err
+	// ディレクトリ判定(ディレクトリの場合はファイル無し)
+	if info.IsDir() {
+		return false, nil
+	}
+
+	// ファイル有り
+	return true, nil
 }
 
 // ファイルオープン

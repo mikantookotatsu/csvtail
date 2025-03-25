@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright (c) 2025 mikantookotatsu
 */
 package cmd
 
