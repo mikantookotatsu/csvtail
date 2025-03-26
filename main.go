@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 mikantookotatsu
+Copyright © 2025 mikantookotatsu 
 */
 package main
 

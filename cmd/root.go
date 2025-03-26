@@ -1,11 +1,13 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright (c) 2025 mikantookotatsu
 */
 package cmd
 
 import (
 	"fmt"
 	"os"
+	"runtime"
+	"sort"
 
 	"github.com/mikantookotatsu/csvtail/csvf"
 	"github.com/spf13/cobra"
@@ -21,7 +23,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "csvtail [ファイル名]",
 	Short: "csvtail は CSVファイルを監視するツールです.",
-	Long: `csvtail は CSVファイルを監視するツールです(tail -fのように).
+	Long: `csvtail は CSVファイルを監視するツールです(tail -fのように).所定のカラムのみを出力できることが特徴です.
 ex) csvtail file.csv  ## tail -f file.csv相当の挙動
     csvtail file.csv -c 1,2,3  ## 1,2,3カラムのみ表示
     csvtail file.csv -c 1,2,3 -d ","  ## 区切り文字を指定
@@ -43,16 +45,28 @@ func runCsvTail(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	// Columnsが存在する場合、重複を除き昇順にソート
+	fixColumns := uniqueSorted(columns)
+
+	// OSから改行コードの設定
+	var lineBreak string
+	if runtime.GOOS == "windows" {
+		lineBreak = "\r\n"
+	} else {
+		lineBreak = "\n"
+	}
+
 	// パラメータセット
 	csvf := csvf.CsvfInf{
 		FileName:  args[0],
-		Columns:   columns,
+		Columns:   fixColumns,
 		Delimiter: delimiter,
+		LineBreak: lineBreak,
 		Seconds:   seconds,
 	}
 
 	// ファイル存在チェック
-	if !csvf.FileExists() {
+	if b, _ := csvf.FileExists(); !b {
 		fmt.Printf("[%s]ファイルは存在しません.", csvf.FileName)
 		os.Exit(1)
 	}
@@ -90,6 +104,33 @@ Flags:
 
 	// フラグ情報の設定
 	rootCmd.Flags().IntSliceVarP(&columns, "columns", "c", []int{}, "表示するカラム番号")
-	rootCmd.Flags().IntVarP(&seconds, "seconds", "s", 1, "監視間隔(秒)")
+	rootCmd.Flags().IntVarP(&seconds, "seconds", "s", 0, "監視間隔(秒)")
 	rootCmd.Flags().StringVarP(&delimiter, "delimiter", "d", ",", "区切り文字")
+}
+
+// スライスの重複除去＆昇順ソート
+func uniqueSorted(input []int) []int {
+	// 引数チェック
+	if len(input) == 0 {
+		return []int{} // 空スライスを返しておく
+	}
+
+	// 重複を除去  struct{}はキーのみを持つmap メモリ効率よい
+	uniqueMap := make(map[int]struct{})
+	for _, val := range input {
+		uniqueMap[val] = struct{}{} // mapは重複を許さないので、重複する値は上書きされている
+	}
+
+	// マップのキーをスライスに変換する
+	uniqueSlice := make([]int, len(uniqueMap))
+	i := 0
+	for key := range uniqueMap {
+		uniqueSlice[i] = key
+		i++
+	}
+
+	// 昇順ソート
+	sort.Ints(uniqueSlice)
+
+	return uniqueSlice
 }
